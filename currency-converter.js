@@ -7,24 +7,36 @@ const getExchangeRate = async (fromCurrency, toCurrency) => {
   const euro = 1 / rate[fromCurrency];
   const exchangeRate = euro * rate[toCurrency];
 
+  if (isNaN(exchangeRate)) {
+    throw new Error(`Unable to get currency ${fromCurrency} and ${toCurrency}`);
+  }
+
   return exchangeRate;
 };
 
 const getCountries = async (toCurrency) => {
-  const response = await axios.get(`https://restcountries.eu/rest/v2/currency/${toCurrency}`);
+  try {
+    const response = await axios.get(`https://restcountries.eu/rest/v2/currency/${toCurrency}`);
 
-  return response.data.map((country) => country.name);
+    return response.data.map((country) => country.name);
+  } catch (error) {
+    throw new Error(`Unable to get countries that use ${toCurrency}`);
+  }
 };
 
 const convertCurrency = async (fromCurrency, toCurrency, amount) => {
-  const exchangeRate = await getExchangeRate(fromCurrency, toCurrency);
   const countries = await getCountries(toCurrency);
+  const exchangeRate = await getExchangeRate(fromCurrency, toCurrency);
 
   const convertedAmount = amount * exchangeRate;
 
   return `${amount} ${fromCurrency} is worth ${convertedAmount} ${toCurrency}. You can spent these in the following countries: ${countries.map((country) => `\n${country}`)}`;
 };
 
-convertCurrency("USD", "EUR", 2).then((message) => {
-  console.log(message);
-});
+convertCurrency("USD", "CAD", 20)
+  .then((message) => {
+    console.log(message);
+  })
+  .catch((error) => {
+    console.log(error.message);
+  });
