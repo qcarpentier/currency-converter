@@ -29,17 +29,27 @@ const getCountries = async (currencyCode) => {
   }
 };
 
-const convertCurrency = async (fromCurrency, toCurrency, amount) => {
+const convertCurrency = async (fromCurrency, toCurrency, amount, showCountries) => {
+  let convertedAmount = 0;
   fromCurrency = fromCurrency.toUpperCase();
   toCurrency = toCurrency.toUpperCase();
 
-  const [exchangeRate, countries] = await Promise.all([getExchangeRate(fromCurrency, toCurrency), getCountries(toCurrency)]);
-
-  const convertedAmount = (amount * exchangeRate).toFixed(2);
-
-  return `${amount} ${fromCurrency} is worth ${convertedAmount} ${toCurrency}. You can spend these in the following countries: ${countries.map((country) => `\n${country}`)}`;
+  if (showCountries) {
+    const [exchangeRate, countries] = await Promise.all([getExchangeRate(fromCurrency, toCurrency), getCountries(toCurrency)]);
+    convertedAmount = convertAmount(amount, exchangeRate);
+    return `${amount} ${fromCurrency} is worth ${convertedAmount} ${toCurrency}. \nYou can spend these in the following countries: ${countries.map((country) => `\n${country}`)}`;
+  } else {
+    const exchangeRate = await getExchangeRate(fromCurrency, toCurrency);
+    convertedAmount = convertAmount(amount, exchangeRate);
+    return `${amount} ${fromCurrency} is worth ${convertedAmount} ${toCurrency}.`;
+  }
 };
 
-convertCurrency("EUR", "CAD", 20)
+const convertAmount = (amount, exchangeRate) => {
+  return (amount * exchangeRate).toFixed(2);
+};
+
+const showCountries = false;
+convertCurrency("USD", "CAD", 250000, showCountries)
   .then((message) => console.log(message))
   .catch((error) => console.log(error.message));
